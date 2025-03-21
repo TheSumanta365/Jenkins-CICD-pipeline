@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    tools {
+        jdk 'JDK17' // JDK टूल कॉन्फिगर करना होगा
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/TheSumanta365/Simple-Java-CICD.git'
+            }
+        }
+        stage('Build') {
+            steps {
+                sh 'javac SimpleApp.java'
+            }
+        }
+        stage('Test') {
+            steps {
+                sh 'javac -cp "junit-4.13.2.jar:hamcrest-core-1.3.jar" SimpleAppTest.java'
+                sh 'java -cp ".:junit-4.13.2.jar:hamcrest-core-1.3.jar" org.junit.runner.JUnitCore SimpleAppTest'
+            }
+        }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                    $SONAR_SCANNER_HOME/bin/sonar-scanner \
+                      -Dsonar.projectKey=Simple-Java-CICD \
+                      -Dsonar.projectName="Simple Java CICD" \
+                      -Dsonar.projectVersion=1.0 \
+                      -Dsonar.sources=.
+                    '''
+                }
+            }
+        }
+        stage('Deploy') {
+            steps {
+                sh 'java SimpleApp &'
+                echo 'App deployed!'
+            }
+        }
+    }
+}
